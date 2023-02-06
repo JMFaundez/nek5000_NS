@@ -304,8 +304,8 @@ c-----------------------------------------------------------------------
       imesh=1
       call rzero(h2,ntot1)
       !if (nid.eq.0) write(*,*) 'VDIFF:', vdiff(1,1,1,1,1)
-      !call wlaplacian(lapu,vx,vdiff,1)
-      call axhelm(lapu,vx,vdiff,h2,imesh,1)
+      call wlaplacian(lapu,vx,vdiff,1)
+      !call axhelm(lapu,vx,vdiff,h2,imesh,1)
       call wlaplacian(lapv,vy,vdiff,1)
       if (if3d) call wlaplacian(lapw,vz,vdiff,1)
 
