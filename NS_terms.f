@@ -147,11 +147,11 @@ c-----------------------------------------------------------------------
       ! Mdudt=Dp-Ku+fux-Cu
 
       !call chsign(v1,ntot1) 
-      call chsign(v2,ntot1) 
-      call chsign(v4,ntot1) 
+      !call chsign(v2,ntot1) 
+      !call chsign(v4,ntot1) 
       call add3(rhs,v1,v3,ntot1) 
-      call add2(rhs,v2,ntot1)
-      call add2(rhs,v4,ntot1)
+      call sub2(rhs,v2,ntot1)
+      call sub2(rhs,v4,ntot1)
 
 
       end subroutine
@@ -298,9 +298,14 @@ c-----------------------------------------------------------------------
       include 'INPUT'
       real*8 lapu(lx1,ly1,lz1,lelv), lapv(lx1,ly1,lz1,lelv),
      &        lapw(lx1,ly1,lz1,lelv)
+      real*8 h2(lx1,ly1,lz1,lelv)
       ntot1 = lx1*ly1*lz1*nelv
-
-      call wlaplacian(lapu,vx,vdiff,1)
+      
+      imesh=1
+      call rzero(h2,ntot1)
+      !if (nid.eq.0) write(*,*) 'VDIFF:', vdiff(1,1,1,1,1)
+      !call wlaplacian(lapu,vx,vdiff,1)
+      call axhelm(lapu,vx,vdiff,h2,imesh,1)
       call wlaplacian(lapv,vy,vdiff,1)
       if (if3d) call wlaplacian(lapw,vz,vdiff,1)
 
