@@ -19,6 +19,7 @@ c-----------------------------------------------------------------------
      &       resv(lx1,ly1,lz1,lelv), rhsv(lx1,ly1,lz1,lelv),
      &       resw(lx1,ly1,lz1,lelv), rhsw(lx1,ly1,lz1,lelv)
       real*8 allvar(lx1*ly1*lz1*lelv,7)
+      real*8 sn1,sn2,sn3,sn4,sn5
       logical verb1
 
       
@@ -58,10 +59,20 @@ c-----------------------------------------------------------------------
       vmax = glmax(resu,ntot1)
       vmin = glmin(resu,ntot1)
       tnorm = gl2norm(resu,ntot1)
+      sn1 = gl2norm(dudt,ntot1)
+      sn2 = gl2norm(fux,ntot1)
+      sn3 = gl2norm(dpdx,ntot1)
+      sn4 = gl2norm(convu,ntot1)
+      sn5 = gl2norm(lapu,ntot1)
 
       if(nid.eq.0.and.verb1) write(*,*) 'Strong Max res:', vmax
       if(nid.eq.0.and.verb1) write(*,*) 'Strong Min res:', vmin
       if(nid.eq.0.and.verb1) write(*,*) 'Strong norm res:', tnorm
+      if(nid.eq.0.and.verb1) write(*,*) 'Strong norm dudt:', sn1
+      if(nid.eq.0.and.verb1) write(*,*) 'Strong norm fux:', sn2
+      if(nid.eq.0.and.verb1) write(*,*) 'Strong norm dpdx:', sn3
+      if(nid.eq.0.and.verb1) write(*,*) 'Strong norm convu:', sn4
+      if(nid.eq.0.and.verb1) write(*,*) 'Strong norm lapu:', sn5
 
       return
       end subroutine
@@ -90,6 +101,7 @@ c-----------------------------------------------------------------------
      &       resv(lx1,ly1,lz1,lelv), rhsv(lx1,ly1,lz1,lelv),
      &       resw(lx1,ly1,lz1,lelv), rhsw(lx1,ly1,lz1,lelv)
       real*8 allvar(lx1*ly1*lz1*lelv,7)
+      real*8 wn1,wn2,wn3,wn4,wn5
       logical verb1
       !write(*,*) nbd
       !write(*,*) nfield
@@ -127,9 +139,20 @@ c-----------------------------------------------------------------------
       vmin = glmin(resu,ntot1)
       tnorm = gl2norm(resu,ntot1)
 
+      wn1 = gl2norm(dudt,ntot1)
+      wn2 = gl2norm(fux,ntot1)
+      wn3 = gl2norm(dpdx,ntot1)
+      wn4 = gl2norm(convu,ntot1)
+      wn5 = gl2norm(lapu,ntot1)
+
       if(nid.eq.0.and.verb1) write(*,*) 'Weak Max res:', vmax
       if(nid.eq.0.and.verb1) write(*,*) 'Weak Min res:', vmin
       if(nid.eq.0.and.verb1) write(*,*) 'Weak norm res:', tnorm
+      if(nid.eq.0.and.verb1) write(*,*) 'Weak norm dudt:', wn1
+      if(nid.eq.0.and.verb1) write(*,*) 'Weak norm fux:', wn2
+      if(nid.eq.0.and.verb1) write(*,*) 'Weak norm dpdx:', wn3
+      if(nid.eq.0.and.verb1) write(*,*) 'Weak norm convu:', wn4
+      if(nid.eq.0.and.verb1) write(*,*) 'Weak norm lapu:', wn5
 
       return
       end subroutine
@@ -200,6 +223,7 @@ c-----------------------------------------------------------------------
 
 
       ntot1 = lx1*ly1*lz1*nelv
+      ntot = nx1*ny1*nz1*nelv
       const = 1./dt
 !      ! check what's going with vlag
 !      call sub3(dumm1,vx,vx,ntot1)
@@ -236,6 +260,10 @@ c-----------------------------------------------------------------------
       enddo
       call opcolv(dudt,dvdt,dwdt,h2)
 
+      call col2(dudt,bm1,ntot)
+      call dssum(dudt,nx1,ny1,nz1)
+      call col2(dudt,binvm1,ntot)
+
       end subroutine
 
 c-----------------------------------------------------------------------
@@ -258,11 +286,17 @@ c-----------------------------------------------------------------------
       subroutine wdpdx(dpdx,dpdy,dpdz)
       include 'SIZE'
       include 'SOLN'
+      include 'MASS'
       real*8 dpdx(lx1,ly1,lz1,lelv), dpdy(lx1,ly1,lz1,lelv),
      &         dpdz(lx1,ly1,lz1,lelv)
       ntot1 = lx1*ly1*lz1*nelv
+      ntot = nx1*ny1*nz1*nelv
 
       call opgradt(dpdx,dpdy,dpdz,pr)
+
+      call col2(dpdx,bm1,ntot)
+      call dssum(dpdx,nx1,ny1,nz1)
+      call col2(dpdx,binvm1,ntot)
 
       end subroutine
       
@@ -277,6 +311,7 @@ c-----------------------------------------------------------------------
       real*8 convu(lx1,ly1,lz1,lelv), convv(lx1,ly1,lz1,lelv),
      &         convw(lx1,ly1,lz1,lelv)
       ntot1 = lx1*ly1*lz1*nelv
+      ntot = nx1*ny1*nz1*nelv
 
       call convop(convu,vx)
       call col2(convu,bm1,ntot1)
@@ -287,6 +322,9 @@ c-----------------------------------------------------------------------
       call col2(convw,bm1,ntot1)
       endif
 
+      call col2(convu,bm1,ntot)
+      call dssum(convu,nx1,ny1,nz1)
+      call col2(convu,binvm1,ntot)
       end subroutine
 
 c-----------------------------------------------------------------------
@@ -296,10 +334,12 @@ c-----------------------------------------------------------------------
       include 'SIZE'
       include 'SOLN'
       include 'INPUT'
+      include 'MASS'
       real*8 lapu(lx1,ly1,lz1,lelv), lapv(lx1,ly1,lz1,lelv),
      &        lapw(lx1,ly1,lz1,lelv)
       real*8 h2(lx1,ly1,lz1,lelv)
       ntot1 = lx1*ly1*lz1*nelv
+      ntot = nx1*ny1*nz1*nelv
       
       imesh=1
       call rzero(h2,ntot1)
@@ -308,6 +348,10 @@ c-----------------------------------------------------------------------
       !call axhelm(lapu,vx,vdiff,h2,imesh,1)
       call wlaplacian(lapv,vy,vdiff,1)
       if (if3d) call wlaplacian(lapw,vz,vdiff,1)
+
+      call col2(lapu,bm1,ntot)
+      call dssum(lapu,nx1,ny1,nz1)
+      call col2(lapu,binvm1,ntot)
 
       end subroutine
 
