@@ -4,6 +4,7 @@ c-----------------------------------------------------------------------
       subroutine strong_ns
       include 'SIZE'
       include 'SOLN'
+      include 'MYNS'
 
       real*8 dudt(lx1,ly1,lz1,lelv), dvdt(lx1,ly1,lz1,lelv),
      &         dwdt(lx1,ly1,lz1,lelv)
@@ -20,13 +21,11 @@ c-----------------------------------------------------------------------
      &       resw(lx1,ly1,lz1,lelv), rhsw(lx1,ly1,lz1,lelv)
       real*8 allvar(lx1*ly1*lz1*lelv,7)
       real*8 sn1,sn2,sn3,sn4,sn5
-      logical verb1
 
       
       !write(*,*) nbd
       !write(*,*) nfield
       ntot1 = lx1*ly1*lz1*nelv
-      verb1 = .true.
 
       if(nid.eq.0.and.verb1)  write(*,*) 'Computing dudt'
       call sdveldt(dudt,dvdt,dwdt)
@@ -86,6 +85,7 @@ c-----------------------------------------------------------------------
       subroutine weak_ns
       include 'SIZE'
       include 'SOLN'
+      include 'MYNS'
 
       real*8 dudt(lx1,ly1,lz1,lelv), dvdt(lx1,ly1,lz1,lelv),
      &         dwdt(lx1,ly1,lz1,lelv)
@@ -102,11 +102,9 @@ c-----------------------------------------------------------------------
      &       resw(lx1,ly1,lz1,lelv), rhsw(lx1,ly1,lz1,lelv)
       real*8 allvar(lx1*ly1*lz1*lelv,7)
       real*8 wn1,wn2,wn3,wn4,wn5
-      logical verb1
       !write(*,*) nbd
       !write(*,*) nfield
       ntot1 = lx1*ly1*lz1*nelv
-      verb1 = .true.
 
 
       if(nid.eq.0.and.verb1)  write(*,*) 'Computing dudt'
@@ -207,6 +205,8 @@ c-----------------------------------------------------------------------
       include 'TSTEP'
       include 'SOLN'
       include 'MASS'
+      include 'INPUT'
+      include 'MYNS'
       ! using these as working arrays
 !      common /SCRNS/ h2(lx1,ly1,lz1,lelv),
 !     &              TA1(lx1,ly2,lz1,lelv),
@@ -225,6 +225,7 @@ c-----------------------------------------------------------------------
       ntot1 = lx1*ly1*lz1*nelv
       ntot = nx1*ny1*nz1*nelv
       const = 1./dt
+
 !      ! check what's going with vlag
 !      call sub3(dumm1,vx,vx,ntot1)
 !      velnorm = gl2norm(dumm1,ntot1)
@@ -259,11 +260,14 @@ c-----------------------------------------------------------------------
          call opadd2(dudt,dvdt,dwdt,TA1,TA2,TA3)
       enddo
       call opcolv(dudt,dvdt,dwdt,h2)
-
-      call col2(dudt,bm1,ntot)
-      call dssum(dudt,nx1,ny1,nz1)
-      call col2(dudt,binvm1,ntot)
-
+      
+      if(ifcont) then
+      call make_cont(dudt)
+      call make_cont(dvdt)
+      if(if3d) then
+      call make_cont(dwdt)
+      endif
+      endif
       end subroutine
 
 c-----------------------------------------------------------------------
@@ -287,6 +291,8 @@ c-----------------------------------------------------------------------
       include 'SIZE'
       include 'SOLN'
       include 'MASS'
+      include 'INPUT'
+      include 'MYNS'
       real*8 dpdx(lx1,ly1,lz1,lelv), dpdy(lx1,ly1,lz1,lelv),
      &         dpdz(lx1,ly1,lz1,lelv)
       ntot1 = lx1*ly1*lz1*nelv
@@ -294,10 +300,13 @@ c-----------------------------------------------------------------------
 
       call opgradt(dpdx,dpdy,dpdz,pr)
 
-      call col2(dpdx,bm1,ntot)
-      call dssum(dpdx,nx1,ny1,nz1)
-      call col2(dpdx,binvm1,ntot)
-
+      if (ifcont) then
+      call make_cont(dpdx)
+      call make_cont(dpdy)
+      if(if3d) then
+      call make_cont(dpdz)
+      endif
+      endif
       end subroutine
       
 c-----------------------------------------------------------------------
@@ -308,6 +317,7 @@ c-----------------------------------------------------------------------
       include 'SOLN'
       include 'MASS'
       include 'INPUT'
+      include 'MYNS'
       real*8 convu(lx1,ly1,lz1,lelv), convv(lx1,ly1,lz1,lelv),
      &         convw(lx1,ly1,lz1,lelv)
       ntot1 = lx1*ly1*lz1*nelv
@@ -322,9 +332,13 @@ c-----------------------------------------------------------------------
       call col2(convw,bm1,ntot1)
       endif
 
-      call col2(convu,bm1,ntot)
-      call dssum(convu,nx1,ny1,nz1)
-      call col2(convu,binvm1,ntot)
+      if(ifcont) then
+      call make_cont(convu)
+      call make_cont(convv)
+      if(if3d) then
+      call make_cont(convw)
+      endif
+      endif
       end subroutine
 
 c-----------------------------------------------------------------------
@@ -335,6 +349,7 @@ c-----------------------------------------------------------------------
       include 'SOLN'
       include 'INPUT'
       include 'MASS'
+      include 'MYNS'
       real*8 lapu(lx1,ly1,lz1,lelv), lapv(lx1,ly1,lz1,lelv),
      &        lapw(lx1,ly1,lz1,lelv)
       real*8 h2(lx1,ly1,lz1,lelv)
@@ -344,14 +359,20 @@ c-----------------------------------------------------------------------
       imesh=1
       call rzero(h2,ntot1)
       !if (nid.eq.0) write(*,*) 'VDIFF:', vdiff(1,1,1,1,1)
-      call wlaplacian(lapu,vx,vdiff,1)
-      !call axhelm(lapu,vx,vdiff,h2,imesh,1)
-      call wlaplacian(lapv,vy,vdiff,1)
-      if (if3d) call wlaplacian(lapw,vz,vdiff,1)
-
-      call col2(lapu,bm1,ntot)
-      call dssum(lapu,nx1,ny1,nz1)
-      call col2(lapu,binvm1,ntot)
+      !call wlaplacian(lapu,vx,vdiff,1)
+      !call wlaplacian(lapv,vy,vdiff,1)
+      !if (if3d) call wlaplacian(lapw,vz,vdiff,1)
+      call axhelm(lapu,vx,vdiff,h2,imesh,1)
+      call axhelm(lapv,vy,vdiff,h2,imesh,1)
+      if(if3d) call axhelm(lapw,vz,vdiff,h2,imesh,1)
+      
+      if(ifcont) then
+      call make_cont(lapu)
+      call make_cont(lapv)
+      if(if3d) then
+      call make_cont(lapw)
+      endif
+      endif
 
       end subroutine
 
@@ -562,9 +583,19 @@ c-----------------------------------------------------------------------
       end subroutine laplacian                                            
 !                                                                         
 
+c-----------------------------------------------------------------------
+c-----------------------------------------------------------------------
 
+      subroutine make_cont(u)
+      include 'SIZE'
+      include 'MASS'
+      real*8 u(lx1,ly1,lz1,lelv)
 
-
+      ntot = nx1*ny1*nz1*nelv
+      call col2(u,bm1,ntot)
+      call dssum(u,nx1,ny1,nz1)
+      call col2(u,binvm1,ntot)
+      end subroutine
 
 
 

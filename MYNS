@@ -1,0 +1,8 @@
+!
+!     Some global variables 
+!
+      logical verb1
+      parameter (verb1=.true.) ! write to logfile some quantities
+      logical ifcont
+      parameter (ifcont=.true.) ! interpolate fields to make them 
+                                ! continuous at element boundaries
