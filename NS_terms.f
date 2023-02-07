@@ -85,6 +85,7 @@ c-----------------------------------------------------------------------
       subroutine weak_ns
       include 'SIZE'
       include 'SOLN'
+      include 'MASS'
       include 'MYNS'
 
       real*8 dudt(lx1,ly1,lz1,lelv), dvdt(lx1,ly1,lz1,lelv),
@@ -123,12 +124,20 @@ c-----------------------------------------------------------------------
       call sub3(resu,dudt,rhsu,ntot1)
       if(nid.eq.0.and.verb1)  write(*,*) 'weak-NS computed'
 
+      !Values must be converted to "physical" space before being saved
+      call col2(resu,binvm1,ntot1) 
       call copy(allvar(1,1),resu,ntot1)  !temp
+      call col2(rhsu,binvm1,ntot1) 
       call copy(allvar(1,2),rhsu,ntot1)  !s1
+      call col2(dudt,binvm1,ntot1) 
       call copy(allvar(1,3),dudt,ntot1)  !s2
+      call col2(fux,binvm1,ntot1) 
       call copy(allvar(1,4),fux,ntot1)   !s3 
+      call col2(dpdx,binvm1,ntot1) 
       call copy(allvar(1,5),dpdx,ntot1)  !s4
+      call col2(convu,binvm1,ntot1) 
       call copy(allvar(1,6),convu,ntot1) !s5 
+      call col2(lapu,binvm1,ntot1) 
       call copy(allvar(1,7),lapu,ntot1)  !s6 
       call outpost2(vx,vy,vz,pr,allvar,7,'res')
       if(nid.eq.0.and.verb1)  write(*,*) 'file saved'
@@ -262,11 +271,11 @@ c-----------------------------------------------------------------------
       call opcolv(dudt,dvdt,dwdt,h2)
       
       if(ifcont) then
-      call make_cont(dudt)
-      call make_cont(dvdt)
-      if(if3d) then
-      call make_cont(dwdt)
-      endif
+        call make_cont(dudt)
+        call make_cont(dvdt)
+        if(if3d) then
+          call make_cont(dwdt)
+        endif
       endif
       end subroutine
 
@@ -301,11 +310,11 @@ c-----------------------------------------------------------------------
       call opgradt(dpdx,dpdy,dpdz,pr)
 
       if (ifcont) then
-      call make_cont(dpdx)
-      call make_cont(dpdy)
-      if(if3d) then
-      call make_cont(dpdz)
-      endif
+        call make_cont(dpdx)
+        call make_cont(dpdy)
+        if(if3d) then
+          call make_cont(dpdz)
+        endif
       endif
       end subroutine
       
@@ -328,16 +337,16 @@ c-----------------------------------------------------------------------
       call convop(convv,vy)
       call col2(convv,bm1,ntot1)
       if (if3d) then
-      call convop(convw,vz)
-      call col2(convw,bm1,ntot1)
+        call convop(convw,vz)
+        call col2(convw,bm1,ntot1)
       endif
 
       if(ifcont) then
-      call make_cont(convu)
-      call make_cont(convv)
-      if(if3d) then
-      call make_cont(convw)
-      endif
+        call make_cont(convu)
+        call make_cont(convv)
+        if(if3d) then
+          call make_cont(convw)
+        endif
       endif
       end subroutine
 
