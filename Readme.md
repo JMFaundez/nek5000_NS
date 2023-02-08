@@ -34,9 +34,9 @@ $$
 
 $$
 \begin{align}
-\mathbf{H}u_i^*&=\mathbf{D}_i^Tp^{n} + h_i^{n+1}\\
-\frac{b_0}{\Delta t}\mathbf{D}_i\mathbf{M}^{-1}\mathbf{D}_i^T(p^{n+1}-p^{n})&= \mathbf{D}_iu_i^*\\
-u_i^{n+1} &= u_i^* + \frac{\Delta t}{b_0}\mathbf{M}^{-1}\mathbf{D}_i^T(p^{n+1}-p^{n})
+\mathbf{H}u_{i}^*&=\mathbf{D}_{i}^Tp^{n} + h_i^{n+1}\\
+\frac{b_0}{\Delta t}\mathbf{D}_i\mathbf{M}^{-1}\mathbf{D}_{i}^T(p^{n+1}-p^{n})&= \mathbf{D}_i u_i^*\\
+u_{i}^{n+1} &= u_i^* + \frac{\Delta t}{b_0}\mathbf{M}^{-1}\mathbf{D}_{i}^T(p^{n+1}-p^{n})
 \end{align}
 $$
 
