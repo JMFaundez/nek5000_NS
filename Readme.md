@@ -30,6 +30,7 @@ $$
 - The convective term is computed in nek as: `convop(convu,u_i)` and then scaled by the mass matrix (check `advab` routine in `navier1.f`)
 
 
+<!---
 ## Time integration: Fractional step method
 
 $$
@@ -42,3 +43,4 @@ $$
 
 - Helmoltz operator: $\mathbf{H}= \frac{b_0}{\Delta t}\mathbf{M} + \frac{1}{Re}\mathbf{K}$
 - $h_i^{n+1}=-\sum_{j=1}^k\frac{b_j}{\Delta t} \mathbf{M}u_i^{n+1-j} - \sum_{j=1}^k a_j\mathbf{C}u_i^{n+1-j} + \mathbf{M}f_i^n$
+-->
