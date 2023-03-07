@@ -57,7 +57,7 @@ c-----------------------------------------------------------------------
         call vsq2d(absdudt,dudt,dvdt,ntot1)
       endif
       call vsqrt(normres,ntot1) 
-      wn1 = gl2norm(absdudt,ntot1)
+      wn1 = glmax(absdudt,ntot1)
       call cmult(normres,1./wn1,ntot1) 
 
       if(nid.eq.0.and.verb1)  write(*,*) 'Saving values'
@@ -179,7 +179,21 @@ c-----------------------------------------------------------------------
       ntot = nx1*ny1*nz1*nelv
       
       imesh=1
-      call rzero(h2,ntot1)
+
+      call copy    (h2,vtrans(1,1,1,1,1),ntot1)
+      call invers2 (h2inv,h2,ntot1)
+
+      ! Helmholz
+      ! call rzero(h2,ntot1)
+      ! if (nid.eq.0) write(*,*) 'VDIFF:', vdiff(1,1,1,1,1)
+      ! call axhelm(w1,vx,vdiff,h2,imesh,1)
+      ! call axhelm(w2,vy,vdiff,h2,imesh,1)
+      ! if(if3d) call axhelm(w3,vz,vdiff,h2,imesh,1)
+      ! call chsign(w1,ntot1)
+      ! call chsign(w2,ntot1)
+      ! call chsign(w3,ntot1)
+
+      ! Weak Laplacian, takes care of boundary conditions
       if (nid.eq.0) write(*,*) 'VDIFF:', vdiff(1,1,1,1,1)
       call wlaplacian(w1,vx,vdiff,1)
       call wlaplacian(w2,vy,vdiff,1)
@@ -247,14 +261,33 @@ c-----------------------------------------------------------------------
       subroutine conv_term(convu,convv,convw)
       include 'SIZE'
       include 'SOLN'
+      include 'MASS'
       include 'INPUT'
+
+      common /scrns/ w1(lx1,ly1,lz1,lelv)
+     $ ,             w2(lx1,ly1,lz1,lelv)
+     $ ,             w3(lx1,ly1,lz1,lelv)
+      common /scrvh/ h2(lx1,ly1,lz1,lelv)
+      common /scrhi/ h2inv(lx1,ly1,lz1,lelv)
+
       real*8 convu(lx1,ly1,lz1,lelv), convv(lx1,ly1,lz1,lelv),
      &       convw(lx1,ly1,lz1,lelv)
       ntot1 = lx1*ly1*lz1*nelv
 
-      call convop(convu,vx)
-      call convop(convv,vy)
-      if (if3d) call convop(convw,vz)
+      call copy    (h2,vtrans(1,1,1,1,1),ntot1)
+      call invers2 (h2inv,h2,ntot1)
+
+      ! Weak computation via the multiplication by the mass matrix
+      call convop(w1,vx)
+      call col2(w1,bm1,ntot1)
+      call convop(w2,vy)
+      call col2(w2,bm1,ntot1)
+      if (if3d) then
+        call convop(w3,vz)
+        call col2(w3,bm1,ntot1)
+      endif
+
+      call opbinv (convu,convv,convw,w1,w2,w3,h2inv) !Inverted mass matrix and averaging
 
       end subroutine                                     
                                                                        
