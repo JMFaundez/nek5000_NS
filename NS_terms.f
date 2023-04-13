@@ -295,7 +295,8 @@ c-----------------------------------------------------------------------
         call col2(ta3,bm1,ntot1)
       endif
 
-      call opbinv (convu,convv,convw,ta1,ta2,ta3,h2inv) !Inverted mass matrix and averaging
+      !Inverted mass matrix and averaging
+      call opbinv (convu,convv,convw,ta1,ta2,ta3,h2inv) 
 
       end subroutine                                     
                                                                        
