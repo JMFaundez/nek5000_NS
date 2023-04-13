@@ -280,7 +280,7 @@ c-----------------------------------------------------------------------
       
       ! Important if the polynomial order has been changed 
       if (param(99).gt.0) then
-        if (nid.eq.0) write(*,*) 'Interpolating into new dealiasing mesh'
+        if (nid.eq.0) write(*,*) 'Interpolating into dealiasing mesh'
         call set_convect_new(vxd,vyd,vzd,vx,vy,vz)
       endif
 
