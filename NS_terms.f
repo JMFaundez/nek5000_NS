@@ -263,10 +263,11 @@ c-----------------------------------------------------------------------
       include 'SOLN'
       include 'MASS'
       include 'INPUT'
+      include 'DEALIAS'
 
-      common /scrns/ w1(lx1,ly1,lz1,lelv)
-     $ ,             w2(lx1,ly1,lz1,lelv)
-     $ ,             w3(lx1,ly1,lz1,lelv)
+      COMMON /scruz/ ta1(lx1,ly1,lz1,lelv)
+     $ ,             ta2(lx1,ly1,lz1,lelv)
+     $ ,             ta3(lx1,ly1,lz1,lelv)
       common /scrvh/ h2(lx1,ly1,lz1,lelv)
       common /scrhi/ h2inv(lx1,ly1,lz1,lelv)
 
@@ -276,18 +277,25 @@ c-----------------------------------------------------------------------
 
       call copy    (h2,vtrans(1,1,1,1,1),ntot1)
       call invers2 (h2inv,h2,ntot1)
-
-      ! Weak computation via the multiplication by the mass matrix
-      call convop(w1,vx)
-      call col2(w1,bm1,ntot1)
-      call convop(w2,vy)
-      call col2(w2,bm1,ntot1)
-      if (if3d) then
-        call convop(w3,vz)
-        call col2(w3,bm1,ntot1)
+      
+      ! Important if the polynomial order has been changed 
+      if (param(99).gt.0) then
+        if (nid.eq.0) write(*,*) 'Interpolating into new dealiasing mesh'
+        call set_convect_new(vxd,vyd,vzd,vx,vy,vz)
       endif
 
-      call opbinv (convu,convv,convw,w1,w2,w3,h2inv) !Inverted mass matrix and averaging
+      ! Weak computation via the multiplication by the mass matrix
+      call convop(ta1,vx)
+      call convop(ta2,vy)
+      call col2(ta1,bm1,ntot1)
+      call col2(ta2,bm1,ntot1)
+
+      if (if3d) then
+        call convop(ta3,vz)
+        call col2(ta3,bm1,ntot1)
+      endif
+
+      call opbinv (convu,convv,convw,ta1,ta2,ta3,h2inv) !Inverted mass matrix and averaging
 
       end subroutine                                     
                                                                        
